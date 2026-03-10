@@ -2,23 +2,21 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# আপনার সচল API Key
-API_KEY = "AIzaSyCkIZAsWEqoJU88GyKR61m-vxrJ3R_3dnQ"
+# আপনার নতুন API Key (সরাসরি এখানে বসিয়ে দিলাম)
+API_KEY = "AIzaSyD66p5vPPvXJo5pkoCNJIkaVqYYP7DLjSs"
 
-# কনফিগারেশন - সরাসরি ভার্সন ফিক্সড করে দিচ্ছি যাতে 404 না আসে
+# কনফিগারেশন - ভার্সন সমস্যা এড়াতে সরাসরি সেটআপ
 try:
     genai.configure(api_key=API_KEY)
-    # আপনার চাবির আন্ডারে যে মডেলগুলো এখন কাজ করছে সেগুলো নিজে খুঁজে বের করা
-    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-    # সবচেয়ে লেটেস্টটা বেছে নেওয়া (Gemini 1.5 Flash থাকলে সেটা আগে নিবে)
-    model_name = "models/gemini-1.5-flash" if "models/gemini-1.5-flash" in available_models else available_models[0]
-    model = genai.GenerativeModel(model_name)
+    # মডেল ফিক্সড করা হয়েছে যাতে 404 এরর না আসে
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error(f"Config error: {e}")
 
-# মোবাইল ফ্রেন্ডলি ডিজাইন
+# মোবাইল ফ্রেন্ডলি ডিজাইন ও ইন্টারফেস
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝", layout="centered")
 
+# চ্যাট বক্স ও ডিজাইন সুন্দর করার জন্য CSS
 st.markdown("""
     <style>
     .stChatFloatingInputContainer { bottom: 20px; }
@@ -27,13 +25,13 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.title("🤝 এহসানের দোস্ত AI")
-st.write("সব বাধা কাটিয়ে আমি চলে এসেছি বন্ধু! এখন প্রাণ খুলে আড্ডা দাও। 😊")
+st.write("বলো বন্ধু, এখন আমি একদম তৈরি! সব ঝেড়ে কাশতে পারো। 😊")
 
-# সেশন স্টেট (আগের কথা মনে রাখার জন্য)
+# আড্ডা মনে রাখার জন্য সেশন স্টেট
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# চ্যাট হিস্ট্রি দেখানো
+# আগের কথাগুলো স্ক্রিনে দেখানো
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -45,27 +43,10 @@ with st.sidebar:
     if uploaded_file:
         st.image(uploaded_file, caption="আপলোড করা ছবি")
 
-# চ্যাট ইনপুট
-if prompt := st.chat_input("এখানে তোমার প্রশ্ন বা মনের কথা লেখো..."):
+# চ্যাট ইনপুট (নিচেই থাকবে, সেন্ড বাটনের কাজ করবে মোবাইলের কিবোর্ড বা এন্টার)
+if prompt := st.chat_input("এখানে কিছু লেখো..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # AI এর উত্তর
-    with st.chat_message("assistant"):
-        with st.spinner("দোস্ত ভাবছে..."):
-            try:
-                # ফ্রেন্ডলি হওয়ার চূড়ান্ত ইনস্ট্রাকশন
-                system_instruction = (
-                    "You are the best friend of Ehesan. Always speak in a very warm, "
-                    "joyful, and casual Bengali. Use emojis like 😊, 🌟, 🔥 often! "
-                    "If Ehesan asks about Math, Physics, or Chemistry, explain it like a "
-                    "cool elder brother. Be funny, chatty, and supportive. "
-                    "Answer strictly in Bengali."
-                )
-
-                if uploaded_file:
-                    img = Image.open(uploaded_file)
-                    response = model.generate_content([system_instruction, img, prompt])
-                else:
-                    response
+    with
