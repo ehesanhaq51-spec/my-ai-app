@@ -68,10 +68,8 @@ if prompt := st.chat_input("এখানে তোমার প্রশ্ন �
 
                 if uploaded_file:
                     img = Image.open(uploaded_file)
-                    # ছবি থাকলে ছবিসহ প্রসেস
                     response = model.generate_content([system_instruction, img, prompt])
                 else:
-                    # শুধু টেক্সট হলে
                     response = model.generate_content(f"{system_instruction}\n\nUser: {prompt}")
                 
                 ai_response = response.text
@@ -79,4 +77,3 @@ if prompt := st.chat_input("এখানে তোমার প্রশ্ন �
                 st.session_state.messages.append({"role": "assistant", "content": ai_response})
             except Exception as e:
                 st.error(f"ইস বন্ধু, ছোট একটা এরর হইছে: {e}")
-                st.info("টিপস: গুগল এআই স্টুডিওতে আপনার কোটা শেষ হয়েছে কি না একবার চেক করুন।")
