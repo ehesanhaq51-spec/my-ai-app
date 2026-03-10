@@ -2,89 +2,69 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# =========================
-# API KEY (আপনার নতুন কী)
-# =========================
+# ১. আপনার নতুন API Key (নিশ্চিত করুন এটি Active আছে)
 API_KEY = "AIzaSyAihcMxRjKtrLXCNaJbsCEPPQDLKWS-hF0"
 
-# transport='rest' যোগ করা হয়েছে যাতে 404 এরর না আসে
-genai.configure(api_key=API_KEY, transport='rest')
+# ২. কনফিগারেশন - সরাসরি ভার্সন সমস্যা এড়াতে 'rest' ট্রান্সপোর্ট ব্যবহার
+try:
+    genai.configure(api_key=API_KEY, transport='rest')
+    # সঠিক মডেল সরাসরি ডিফাইন করা হয়েছে
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except Exception as e:
+    st.error(f"কনফিগারেশনে সমস্যা হয়েছে: {e}")
 
-model = genai.GenerativeModel("gemini-1.5-flash")
+# ৩. ইন্টারফেস ডিজাইন (মোবাইল ফ্রেন্ডলি)
+st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝", layout="centered")
 
-# =========================
-# PAGE
-# =========================
-st.set_page_config(
-    page_title="Ehesan Buddy AI",
-    page_icon="🤝"
-)
+st.markdown("""
+    <style>
+    .stChatFloatingInputContainer { bottom: 20px; }
+    div[data-testid="stChatMessage"] { border-radius: 15px; margin-bottom: 10px; }
+    </style>
+    """, unsafe_allow_html=True)
 
 st.title("🤝 এহসানের দোস্ত AI")
+st.write("বলো বন্ধু, এখন আমি একদম তৈরি! সব ঝেড়ে কাশতে পারো। 😊")
 
-# =========================
-# MEMORY
-# =========================
+# ৪. আড্ডা মনে রাখার ব্যবস্থা
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# =========================
-# SIDEBAR
-# =========================
+# ৫. সাইডবারে ফাইল আপলোড
 with st.sidebar:
-    uploaded_file = st.file_uploader(
-        "ছবি দাও (Math / Science)",
-        type=["png","jpg","jpeg"]
-    )
+    st.header("ছবি বা ফাইল")
+    uploaded_file = st.file_uploader("অংক বা বিজ্ঞান সমস্যার ছবি দাও", type=["jpg", "png", "jpeg"])
 
-# =========================
-# SYSTEM PROMPT
-# =========================
-system_prompt = """
-তুমি এহসানের ভালো বন্ধু।
-সবসময় মজার বাংলায় উত্তর দাও 😊
-Math বা science সহজভাবে বুঝাও।
-Always answer in Bengali.
-"""
-
-# =========================
-# CHAT
-# =========================
-if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
-
-    st.session_state.messages.append(
-        {"role":"user","content":prompt}
-    )
-
+# ৬. চ্যাট ইনপুট ও উত্তর জেনারেট করা
+if prompt := st.chat_input("এখানে কিছু লেখো..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("ভাবছি... 🤔"):
+        with st.spinner("দোস্ত ভাবছে..."):
             try:
-                # সিস্টেম প্রম্পটটি সহ ইনপুট পাঠানো
-                full_content = f"{system_prompt}\n\nUser Question: {prompt}"
-
-                if uploaded_file is not None:
-                    image = Image.open(uploaded_file)
-                    response = model.generate_content(
-                        [full_content, image]
-                    )
-                else:
-                    response = model.generate_content(full_content)
-
-                reply = response.text
-                st.markdown(reply)
-
-                st.session_state.messages.append(
-                    {"role":"assistant","content":reply}
+                # ফ্রেন্ডলি ইনস্ট্রাকশন
+                system_instruction = (
+                    "You are the best friend of Ehesan. Speak in very casual and joyful Bengali. "
+                    "Use lots of emojis like 😊, 🌟, 🔥! Solve math/science problems like a cool big brother. "
+                    "Always reply in Bengali."
                 )
-
+                
+                if uploaded_file:
+                    img = Image.open(uploaded_file)
+                    response = model.generate_content([system_instruction, img, prompt])
+                else:
+                    response = model.generate_content(f"{system_instruction}\n\nUser Question: {prompt}")
+                
+                ai_reply = response.text
+                st.markdown(ai_reply)
+                st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             except Exception as e:
-                # আপনার স্ক্রিনশটের মতো এরর হ্যান্ডেল করা
-                st.error("ইস বন্ধু, একটা কারিগরি সমস্যা হয়েছে!")
-                st.write(f"Technical details: {e}")
+                # এরর মেসেজ সহজ বাংলায় দেখানো
+                st.error("ইস বন্ধু, ছোট একটা কারিগরি সমস্যা হয়েছে।")
+                st.info(f"টেকনিক্যাল এরর ডিটেইলস: {e}")
