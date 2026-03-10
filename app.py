@@ -2,107 +2,63 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# ==============================
-# 🔑 API KEY
-# ==============================
+# =========================
+# API KEY
+# =========================
 
-API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+API_KEY = "YOUR_GEMINI_API_KEY"
 
 genai.configure(api_key=API_KEY)
 
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# ==============================
-# PAGE CONFIG
-# ==============================
+# =========================
+# PAGE
+# =========================
 
 st.set_page_config(
-    page_title="Ehesan's Buddy AI",
-    page_icon="🤝",
-    layout="centered"
+    page_title="Ehesan Buddy AI",
+    page_icon="🤝"
 )
 
-# ==============================
-# STYLE
-# ==============================
-
-st.markdown("""
-<style>
-
-.stChatFloatingInputContainer{
-bottom:20px;
-}
-
-div[data-testid="stChatMessage"]{
-border-radius:15px;
-padding:10px;
-margin-bottom:10px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ==============================
-# TITLE
-# ==============================
-
 st.title("🤝 এহসানের দোস্ত AI")
-st.write("বলো বন্ধু! আমি তোমার AI দোস্ত 😎")
 
-# ==============================
-# SESSION MEMORY
-# ==============================
+# =========================
+# MEMORY
+# =========================
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-# ==============================
-# SHOW CHAT HISTORY
-# ==============================
 
 for msg in st.session_state.messages:
 
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ==============================
+# =========================
 # SIDEBAR
-# ==============================
+# =========================
 
 with st.sidebar:
 
-    st.header("📷 ছবি আপলোড")
-
     uploaded_file = st.file_uploader(
-        "Math / Science Problem এর ছবি দাও",
-        type=["jpg","jpeg","png"]
+        "ছবি দাও (Math / Science)",
+        type=["png","jpg","jpeg"]
     )
 
-    st.divider()
-
-    if st.button("🧹 Chat Clear"):
-        st.session_state.messages=[]
-        st.rerun()
-
-# ==============================
-# SYSTEM INSTRUCTION
-# ==============================
+# =========================
+# SYSTEM PROMPT
+# =========================
 
 system_prompt = """
-You are the best friend of Ehesan.
-
-Speak in casual friendly Bengali.
-Use emojis 😊🔥😄.
-
-Explain math and science problems
-like a cool big brother.
-
-Always reply in Bengali.
+তুমি এহসানের ভালো বন্ধু।
+সবসময় মজার বাংলায় উত্তর দাও 😊
+Math বা science সহজভাবে বুঝাও।
 """
 
-# ==============================
-# CHAT INPUT
-# ==============================
+# =========================
+# CHAT
+# =========================
 
 if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
 
@@ -115,28 +71,23 @@ if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
 
     with st.chat_message("assistant"):
 
-        with st.spinner("দোস্ত ভাবছে... 🤔"):
+        with st.spinner("ভাবছি... 🤔"):
 
             try:
 
-                if uploaded_file:
+                if uploaded_file is not None:
 
-                    img = Image.open(uploaded_file)
+                    image = Image.open(uploaded_file)
 
                     response = model.generate_content(
-                        [system_prompt, img, prompt]
+                        [prompt, image]
                     )
 
                 else:
 
-                    response = model.generate_content(
-                        f"{system_prompt}\nUser:{prompt}"
-                    )
+                    response = model.generate_content(prompt)
 
-                if response.text:
-                    reply = response.text
-                else:
-                    reply = "বন্ধু ঠিক বুঝতে পারিনি 😅 আবার বলো।"
+                reply = response.text
 
                 st.markdown(reply)
 
@@ -146,6 +97,6 @@ if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
 
             except Exception as e:
 
-                st.error("একটু টেকনিক্যাল সমস্যা হয়েছে 😅")
+                st.error("সমস্যা হয়েছে!")
 
                 st.write(e)
