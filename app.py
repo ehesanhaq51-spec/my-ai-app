@@ -5,15 +5,15 @@ from PIL import Image
 # ১. আপনার নতুন API Key (নিশ্চিত করুন এটি Active আছে)
 API_KEY = "AIzaSyD66p5vPPvXJo5pkoCNJIkaVqYYP7DLjSs"
 
-# ২. কনফিগারেশন - সরাসরি ভার্সন ফিক্সড করা হয়েছে যাতে 404 এরর না আসে
+# ২. কনফিগারেশন - সরাসরি ভার্সন সমস্যা এড়াতে সেটআপ
 try:
     genai.configure(api_key=API_KEY)
-    # সঠিক মডেল লোড করা
+    # সঠিক মডেল সরাসরি ডিফাইন করা হয়েছে
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error(f"Config error: {e}")
 
-# ৩. ইন্টারফেস ডিজাইন
+# ৩. ইন্টারফেস ডিজাইন (মোবাইল ফ্রেন্ডলি)
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝", layout="centered")
 
 st.markdown("""
@@ -65,5 +65,6 @@ if prompt := st.chat_input("এখানে কিছু লেখো..."):
                 st.markdown(ai_reply)
                 st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             except Exception as e:
+                # এরর মেসেজ সহজ বাংলায় দেখানো
                 st.error("ইস বন্ধু, ছোট একটা এরর হইছে। গুগল এআই স্টুডিওতে আপনার কোটা শেষ কি না একবার চেক করুন।")
                 st.info(f"প্রযুক্তিগত এরর: {e}")
