@@ -1,23 +1,29 @@
 import streamlit as st
+import google.generativeai as genai
 
-st.set_page_config(page_title="Ehesan's AI", page_icon="🤖")
+# পেজ সেটআপ
+st.set_page_config(page_title="Ehesan's Pro AI", page_icon="🚀")
+st.title("🚀 Ehesan's Smart AI Assistant")
+st.write("যেকোনো প্রশ্ন বা অংক লিখুন, আমি উত্তর দিচ্ছি!")
 
-st.title("🤖 Ehesan's Smart AI Bot")
-st.write("আপনার প্রশ্নের উত্তর দিতে আমি এখন তৈরি!")
+# আপনার API Key এখানে দিন (অবশ্যই aistudio.google.com থেকে কি-টি নিয়ে বসাবেন)
+API_KEY = "আপনার_API_KEY_এখানে_দিন" 
+
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # ইনপুট বক্স
-user_input = st.text_input("এখানে কিছু লিখুন (যেমন: kemon aso):")
+user_input = st.text_input("এখানে লিখুন:", placeholder="Ask me anything...")
 
-if user_input:
-    text = user_input.lower()
-    
-    if "kemon aso" in text or "ki obostha" in text:
-        answer = "আমি খুব ভালো আছি! আপনি কেমন আছেন?"
-    elif "ki koro" in text:
-        answer = "আমি আপনার সাথে কথা বলছি আর নতুন কিছু শেখার চেষ্টা করছি।"
-    elif "nam ki" in text:
-        answer = "আমার নাম এহসান-বট, আপনার ব্যক্তিগত সহকারী!"
+# সুন্দর একটি 'Send' বাটন যোগ করা
+if st.button("Send 📤"):
+    if user_input:
+        with st.spinner('AI উত্তর খুঁজছে...'):
+            try:
+                response = model.generate_content(user_input)
+                st.success("উত্তর পেয়েছি!")
+                st.markdown(f"**AI:** \n\n {response.text}")
+            except Exception as e:
+                st.error("API Key বসানো হয়নি অথবা কোনো ভুল হয়েছে।")
     else:
-        answer = "আপনার কথাটি আমি বুঝতে পেরেছি, কিন্তু আমার মাথায় এখনো সব উত্তর নেই। আমি শিখছি!"
-    
-    st.info(f"AI: {answer}")
+        st.warning("আগে কিছু লিখুন ভাই!")
