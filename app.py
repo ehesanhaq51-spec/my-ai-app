@@ -1,34 +1,25 @@
 import streamlit as st
-import google.generativeai as genai
-from PIL import Image
+import requests
+import json
 
 # ১. আপনার নতুন API Key
 API_KEY = "AIzaSyAihcMxRjKtrLXCNaJbsCEPPQDLKWS-hF0"
 
-# ২. সার্ভার ফিক্স: সরাসরি স্টেবল কানেকশন সেটআপ (যাতে ৪-০-৪ না আসে)
-try:
-    genai.configure(api_key=API_KEY, transport='rest')
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception as e:
-    st.error(f"কনফিগারেশন এরর: {e}")
+# ২. সরাসরি API URL (এটি v1beta এরর দিবে না)
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
-# ৩. ইন্টারফেস ডিজাইন
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝")
 st.title("🤝 এহসানের দোস্ত AI")
 
-# ৪. আড্ডা মনে রাখার ব্যবস্থা
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# চ্যাট হিস্ট্রি দেখানো
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ৫. সাইডবারে ফাইল আপলোড
-with st.sidebar:
-    uploaded_file = st.file_uploader("অংক বা বিজ্ঞানের ছবি দাও", type=["jpg", "png", "jpeg"])
-
-# ৬. চ্যাট ও রেসপন্স
+# চ্যাট ইনপুট
 if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -37,19 +28,24 @@ if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
     with st.chat_message("assistant"):
         with st.spinner("দোস্ত ভাবছে..."):
             try:
-                # আপনার বন্ধুর মতো পারসোনালিটি সেট করা
-                sys_prompt = "তুমি এহসানের বেস্ট ফ্রেন্ড। বাংলায় খুব মজার ও বন্ধুত্বপূর্ণ কথা বলো। অংক বা বিজ্ঞান সহজে বুঝিয়ে দাও।"
+                # সরাসরি রিকোয়েস্ট পাঠানো (সবচেয়ে নিরাপদ পদ্ধতি)
+                payload = {
+                    "contents": [{
+                        "parts": [{"text": f"তুমি এহসানের বন্ধু। বাংলায় উত্তর দাও। প্রশ্ন: {prompt}"}]
+                    }]
+                }
+                headers = {'Content-Type': 'application/json'}
                 
-                if uploaded_file:
-                    img = Image.open(uploaded_file)
-                    response = model.generate_content([sys_prompt, img, prompt])
+                response = requests.post(API_URL, headers=headers, data=json.dumps(payload))
+                result = response.json()
+
+                if response.status_code == 200:
+                    answer = result['candidates'][0]['content']['parts'][0]['text']
+                    st.markdown(answer)
+                    st.session_state.messages.append({"role": "assistant", "content": answer})
                 else:
-                    response = model.generate_content(f"{sys_prompt}\n\nUser: {prompt}")
-                
-                full_reply = response.text
-                st.markdown(full_reply)
-                st.session_state.messages.append({"role": "assistant", "content": full_reply})
+                    # এরর ডিটেইলস দেখানো
+                    st.error(f"এরর কোড: {response.status_code}")
+                    st.write(result)
             except Exception as e:
-                # কোনো এরর হলে তা সহজভাবে দেখানো
-                st.error("ইস বন্ধু! ছোট একটা কারিগরি সমস্যা হয়েছে।")
-                st.info(f"প্রযুক্তিগত এরর: {e}")
+                st.error(f"ইস বন্ধু! আবার সমস্যা: {e}")
