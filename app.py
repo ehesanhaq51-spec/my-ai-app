@@ -2,21 +2,20 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# আপনার নতুন API Key (সরাসরি এখানে বসিয়ে দিলাম)
+# ১. আপনার নতুন API Key (নিশ্চিত করুন এটি Active আছে)
 API_KEY = "AIzaSyD66p5vPPvXJo5pkoCNJIkaVqYYP7DLjSs"
 
-# কনফিগারেশন - ভার্সন সমস্যা এড়াতে সরাসরি সেটআপ
+# ২. কনফিগারেশন - সরাসরি ভার্সন ফিক্সড করা হয়েছে যাতে 404 এরর না আসে
 try:
     genai.configure(api_key=API_KEY)
-    # মডেল ফিক্সড করা হয়েছে যাতে 404 এরর না আসে
+    # সঠিক মডেল লোড করা
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error(f"Config error: {e}")
 
-# মোবাইল ফ্রেন্ডলি ডিজাইন ও ইন্টারফেস
+# ৩. ইন্টারফেস ডিজাইন
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝", layout="centered")
 
-# চ্যাট বক্স ও ডিজাইন সুন্দর করার জন্য CSS
 st.markdown("""
     <style>
     .stChatFloatingInputContainer { bottom: 20px; }
@@ -27,26 +26,44 @@ st.markdown("""
 st.title("🤝 এহসানের দোস্ত AI")
 st.write("বলো বন্ধু, এখন আমি একদম তৈরি! সব ঝেড়ে কাশতে পারো। 😊")
 
-# আড্ডা মনে রাখার জন্য সেশন স্টেট
+# ৪. আড্ডা মনে রাখার ব্যবস্থা
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# আগের কথাগুলো স্ক্রিনে দেখানো
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# সাইডবারে ছবি আপলোড অপশন
+# ৫. সাইডবারে ফাইল আপলোড
 with st.sidebar:
     st.header("ছবি বা ফাইল")
     uploaded_file = st.file_uploader("অংক বা বিজ্ঞান সমস্যার ছবি দাও", type=["jpg", "png", "jpeg"])
-    if uploaded_file:
-        st.image(uploaded_file, caption="আপলোড করা ছবি")
 
-# চ্যাট ইনপুট (নিচেই থাকবে, সেন্ড বাটনের কাজ করবে মোবাইলের কিবোর্ড বা এন্টার)
+# ৬. চ্যাট ইনপুট ও উত্তর জেনারেট করা
 if prompt := st.chat_input("এখানে কিছু লেখো..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with
+    with st.chat_message("assistant"):
+        with st.spinner("দোস্ত ভাবছে..."):
+            try:
+                # ফ্রেন্ডলি ইনস্ট্রাকশন
+                system_instruction = (
+                    "You are the best friend of Ehesan. Speak in very casual and joyful Bengali. "
+                    "Use lots of emojis! 😊🌟 Solve math/science problems like a cool big brother. "
+                    "Always reply in Bengali."
+                )
+                
+                if uploaded_file:
+                    img = Image.open(uploaded_file)
+                    response = model.generate_content([system_instruction, img, prompt])
+                else:
+                    response = model.generate_content(f"{system_instruction}\n\nUser: {prompt}")
+                
+                ai_reply = response.text
+                st.markdown(ai_reply)
+                st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+            except Exception as e:
+                st.error("ইস বন্ধু, ছোট একটা এরর হইছে। গুগল এআই স্টুডিওতে আপনার কোটা শেষ কি না একবার চেক করুন।")
+                st.info(f"প্রযুক্তিগত এরর: {e}")
