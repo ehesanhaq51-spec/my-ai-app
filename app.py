@@ -1,57 +1,47 @@
 import streamlit as st
 import google.generativeai as genai
-from PIL import Image
 
-# আপনার Gemini API Key
+# আপনার সঠিক API Key
 API_KEY = "AIzaSyA22909TPzqXNhoogPTNHMeCDAajn2xij4"
-genai.configure(api_key=API_KEY)
 
-# পেজ কনফিগারেশন
-st.set_page_config(page_title="Ehesan's Pro AI Master", page_icon="🧠")
-st.title("🧠 Ehesan's Visionary AI")
-st.write("আমি এখন ছবি দেখে আপনার অংক, পদার্থবিজ্ঞান ও রসায়নের সমাধান দিতে পারি!")
+# গুগল এআই কনফিগারেশন
+try:
+    genai.configure(api_key=API_KEY)
+    # লেটেস্ট ফ্ল্যাশ মডেল ব্যবহার করছি যা টেক্সট ও অংকে সেরা
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+except Exception as e:
+    st.error(f"Config error: {e}")
 
-# চ্যাট হিস্ট্রি বক্স খালি করার ট্রিক
-if "input_text" not in st.session_state:
-    st.session_state.input_text = ""
+st.set_page_config(page_title="Ehesan's Smart AI", page_icon="🧠")
+st.title("🧠 Ehesan's Pro AI Assistant")
+st.write("আমি এখন আপনার অংক, ফিজিক্স, কেমিস্ট্রি এবং যেকোনো প্রশ্নের উত্তর দিতে তৈরি!")
 
-def submit():
-    st.session_state.input_text = st.session_state.widget
+# ইনপুট বক্স খালি করার সিস্টেম
+if "user_input" not in st.session_state:
+    st.session_state.user_input = ""
+
+def handle_input():
+    st.session_state.user_input = st.session_state.widget
     st.session_state.widget = ""
 
-# ছবি আপলোড করার অপশন (অংক বা নোটের ছবি দেওয়ার জন্য)
-uploaded_file = st.file_uploader("অংক বা সমস্যার ছবি আপলোড করুন", type=["jpg", "jpeg", "png"])
+# টেক্সট ইনপুট (এন্টার দিলেই লেখা মুছে যাবে)
+st.text_input("আপনার প্রশ্নটি এখানে লিখুন:", key="widget", on_change=handle_input)
 
-# টেক্সট ইনপুট
-user_query = st.text_input("আপনার প্রশ্ন লিখুন:", key="widget", on_change=submit)
-final_query = st.session_state.input_text
-
-if st.button("Send 📤") or final_query:
-    query_to_use = final_query if final_query else "এই ছবিতে কী আছে বুঝিয়ে বলো।"
-    
-    with st.spinner('বিশ্লেষণ করছি...'):
+# প্রসেসিং
+if st.session_state.user_input:
+    query = st.session_state.user_input
+    with st.spinner('AI ভাবছে...'):
         try:
-            # এখানে 'gemini-1.5-flash' ব্যবহার করছি যা ছবি ও বাংলা দুটোই সেরা বোঝে
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            
-            if uploaded_file:
-                img = Image.open(uploaded_file)
-                # ছবি এবং টেক্সট একসাথে প্রসেস করা
-                response = model.generate_content([
-                    "You are an expert teacher. Explain the problem in the image clearly in Bengali. Solve any math, physics, or chemistry problem step by step.", 
-                    img, 
-                    query_to_use
-                ])
-            else:
-                # শুধু টেক্সট হলে
-                response = model.generate_content(f"সবসময় বাংলায় উত্তর দাও। প্রশ্ন: {query_to_use}")
+            # ইনস্ট্রাকশন সেট করে দেওয়া হচ্ছে
+            prompt = f"সহজ বাংলা এবং প্রয়োজনে ইংরেজিতে উত্তর দাও। কঠিন অংক বা বিজ্ঞানের সমস্যার সমাধান স্টেপ-বাই-স্টেপ বুঝিয়ে বলো। প্রশ্ন: {query}"
+            response = model.generate_content(prompt)
             
             st.write("---")
             st.markdown(response.text)
-            st.session_state.input_text = "" # উত্তর দেখানোর পর প্রশ্ন মুছে ফেলা
-            
+            # উত্তর দেখানোর পর প্রশ্নটি মেমোরি থেকে মুছে ফেলা
+            st.session_state.user_input = ""
         except Exception as e:
-            st.error(f"দুঃখিত ভাই, একটি সমস্যা হয়েছে: {e}")
+            st.error(f"দুঃখিত ভাই, আবার এরর এসেছে: {e}")
+            st.info("টিপস: গুগল এআই স্টুডিওতে গিয়ে দেখুন আপনার API Key-টি 'Active' আছে কি না।")
 
-if uploaded_file:
-    st.image(uploaded_file, caption="আপনার আপলোড করা ছবি", use_container_width=True)
+st.button("Send 📤")
