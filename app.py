@@ -1,52 +1,62 @@
 import streamlit as st
 import google.generativeai as genai
+from PIL import Image
 
-# আপনার নতুন API Key
+# আপনার একদম নতুন API Key
 API_KEY = "AIzaSyCkIZAsWEqoJU88GyKR61m-vxrJ3R_3dnQ"
 
-# কনফিগারেশন এবং সেফটি চেক
-try:
-    genai.configure(api_key=API_KEY)
-    # আপনার একাউন্টে কোন মডেলটি ভালো কাজ করে তা নিজে খুঁজে বের করবে
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception as e:
-    st.error(f"Config error: {e}")
+# গুগল কনফিগারেশন
+genai.configure(api_key=API_KEY)
 
-st.set_page_config(page_title="Ehesan's Smart AI", page_icon="🧠")
-st.title("🧠 Ehesan's Pro AI Assistant")
+# পেজ ডিজাইন
+st.set_page_config(page_title="Ehesan's Ultimate AI", page_icon="🚀")
+st.title("🚀 Ehesan's Ultimate AI Assistant")
+st.write("আমি এখন টেক্সট এবং ছবি দেখে অংক ও বিজ্ঞানের সমাধান দিতে পারি!")
 
-# বক্স খালি করার জন্য সেশন স্টেট
-if "user_input" not in st.session_state:
-    st.session_state.user_input = ""
+# সেশন স্টেট (বক্স খালি করার জন্য)
+if "user_query" not in st.session_state:
+    st.session_state.user_query = ""
 
-def handle_input():
-    st.session_state.user_input = st.session_state.widget
-    st.session_state.widget = ""
+def clear_box():
+    st.session_state.user_query = st.session_state.input_widget
+    st.session_state.input_widget = ""
 
-# ইনপুট বক্স (প্রশ্ন লিখে এন্টার দিলে লেখাটি ভ্যানিশ হয়ে যাবে)
-st.text_input("আপনার অংক বা যেকোনো প্রশ্ন এখানে লিখুন:", key="widget", on_change=handle_input)
+# ছবি আপলোড অপশন
+uploaded_file = st.file_uploader("অংক বা বিজ্ঞান সমস্যার ছবি দিন", type=["jpg", "jpeg", "png"])
 
-# প্রসেসিং পার্ট
-if st.session_state.user_input:
-    query = st.session_state.user_input
-    with st.spinner('AI ভাবছে...'):
+# টেক্সট ইনপুট
+st.text_input("আপনার প্রশ্ন লিখুন:", key="input_widget", on_change=clear_box)
+
+# বাটন বা এন্টার চাপলে প্রসেস শুরু
+if st.session_state.user_query or uploaded_file:
+    query = st.session_state.user_query
+    with st.spinner('বিশ্লেষণ করছি...'):
         try:
-            # ইনস্ট্রাকশন: সে যেন আমার (Gemini) মতো বুদ্ধিমান হয়
-            instruction = (
-                "You are an expert tutor like Gemini. Solve Math, Physics, and Chemistry "
-                "problems step-by-step in Bengali. Always respond in Bengali. "
-                "Be polite and helpful."
-            )
-            response = model.generate_content(f"{instruction}\n\nQuestion: {query}")
+            # লেটেস্ট মডেল লোড করা
+            model = genai.GenerativeModel('gemini-1.5-flash')
             
-            st.write(f"**প্রশ্ন:** {query}")
+            # প্রম্পট সেট করা যেন আমার (Gemini) মতো বুদ্ধিমান উত্তর দেয়
+            prompt = (
+                "You are a highly intelligent AI tutor like Gemini. "
+                "Solve math, physics, and chemistry problems step-by-step. "
+                "Always respond in clear Bengali. If a picture is provided, analyze it deeply."
+            )
+
+            if uploaded_file:
+                img = Image.open(uploaded_file)
+                response = model.generate_content([prompt, img, query if query else "Explain this image."])
+            else:
+                response = model.generate_content(f"{prompt} Question: {query}")
+            
             st.write("---")
             st.markdown(response.text)
             
-            # মেমোরি ক্লিয়ার করা
-            st.session_state.user_input = ""
+            # কাজ শেষে কুয়েরি মুছে ফেলা
+            st.session_state.user_query = ""
+            
         except Exception as e:
-            st.error(f"দুঃখিত ভাই, আবার এরর এসেছে: {e}")
-            st.info("টিপস: গুগল এআই স্টুডিওতে আপনার কোটা শেষ হয়েছে কি না একবার চেক করুন।")
+            st.error(f"দুঃখিত ভাই, এরর হয়েছে: {e}")
+            st.info("টিপস: GitHub-এ ফাইল সেভ করার সময় 'Allow Secret' ক্লিক করতে ভুলবেন না।")
 
-st.button("Send 📤")
+if uploaded_file:
+    st.image(uploaded_file, caption="আপলোড করা ছবি", use_container_width=True)
