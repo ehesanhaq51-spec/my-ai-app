@@ -2,62 +2,66 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# আপনার একদম নতুন এবং সচল API Key
+# আপনার সচল API Key
 API_KEY = "AIzaSyCkIZAsWEqoJU88GyKR61m-vxrJ3R_3dnQ"
+genai.configure(api_key=API_KEY)
 
-# অটো-মডেল সিলেকশন এবং কনফিগারেশন
-try:
-    genai.configure(api_key=API_KEY)
-    # আপনার চাবির আন্ডারে যে মডেলগুলো এখন কাজ করছে সেগুলো খুঁজে বের করা
-    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-    # সবচেয়ে লেটেস্টটা বেছে নেওয়া (Gemini 1.5 Flash থাকলে সেটা আগে নিবে)
-    selected_model = "models/gemini-1.5-flash" if "models/gemini-1.5-flash" in available_models else available_models[0]
-    model = genai.GenerativeModel(selected_model)
-except Exception as e:
-    st.error(f"API সংযোগে সমস্যা: {e}")
+# মোবাইলের জন্য স্ক্রিন সেটআপ
+st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝", layout="centered")
 
-st.set_page_config(page_title="Ehesan's Pro AI Master", page_icon="🧠")
-st.title("🧠 Ehesan's Pro AI Master")
+# CSS দিয়ে ইন্টারফেস সুন্দর করা (মোবাইল ফ্রেন্ডলি)
+st.markdown("""
+    <style>
+    .main { background-color: #f0f2f6; }
+    .stTextInput { position: fixed; bottom: 3rem; width: 100%; }
+    .stButton { position: fixed; bottom: 3rem; right: 1rem; }
+    </style>
+    """, unsafe_allow_status_code=True)
 
-# বক্স খালি করার জন্য সেশন স্টেট
-if "user_query" not in st.session_state:
-    st.session_state.user_query = ""
+st.title("🤝 এহসানের দোস্ত AI")
+st.write("বলো বন্ধু, আজ কী নিয়ে আড্ডা দিবা? অংক, বিজ্ঞান নাকি মনের কথা?")
 
-def clear_input():
-    st.session_state.user_query = st.session_state.widget
-    st.session_state.widget = ""
+# সেশন স্টেট আড্ডা মনে রাখার জন্য
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# ইমেজ আপলোডার (চোখের কাজ করবে)
-uploaded_file = st.file_uploader("অংক বা বিজ্ঞান সমস্যার ছবি আপলোড করুন", type=["jpg", "jpeg", "png"])
+# আগের আড্ডাগুলো দেখানো
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# টেক্সট ইনপুট (মগজের কাজ করবে)
-st.text_input("আপনার প্রশ্নটি লিখুন:", key="widget", on_change=clear_input)
+# ছবি আপলোড (ঐচ্ছিক)
+uploaded_file = st.sidebar.file_uploader("ছবি পাঠাও এখানে", type=["jpg", "png", "jpeg"])
 
-# প্রসেসিং
-if st.session_state.user_query or uploaded_file:
-    query = st.session_state.user_query
-    with st.spinner('মাস্টারমাইন AI বিশ্লেষণ করছে...'):
-        try:
-            # ইনস্ট্রাকশন: ঠিক আমার মতো করে উত্তর দিতে বলা হয়েছে
-            instruction = (
-                "You are an expert tutor like Gemini. Solve any Math, Physics, or "
-                "Chemistry problems step-by-step in Bengali. Always respond in clear Bengali. "
-                "Be detailed and easy to understand."
-            )
-            
-            if uploaded_file:
-                img = Image.open(uploaded_file)
-                response = model.generate_content([instruction, img, query if query else "Explain this picture."])
-            else:
-                response = model.generate_content(f"{instruction}\n\nQuestion: {query}")
-            
-            st.write("---")
-            st.markdown(response.text)
-            st.session_state.user_query = "" # কাজ শেষে কুয়েরি মুছে ফেলা
-            
-        except Exception as e:
-            st.error(f"দুঃখিত ভাই, আবার এরর এসেছে: {e}")
-            st.info("টিপস: গুগল এআই স্টুডিওতে আপনার কোটা শেষ হয়েছে কি না একবার চেক করুন।")
+# চ্যাট ইনপুট (নিচেই থাকবে মোবাইলের মতো)
+if prompt := st.chat_input("এখানে কিছু লিখুন..."):
+    # ইউজারের মেসেজ দেখানো
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-if uploaded_file:
-    st.image(uploaded_file, caption="আপনার আপলোড করা ছবি", use_container_width=True)
+    # AI এর উত্তর তৈরি
+    with st.chat_message("assistant"):
+        with st.spinner("বন্ধু ভাবছে..."):
+            try:
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                
+                # ফ্রেন্ডলি হওয়ার কড়া ইনস্ট্রাকশন
+                system_prompt = (
+                    "You are a friendly best friend of Ehesan. Speak in very casual, warm, "
+                    "and joyful Bengali. Don't be too formal. If Ehesan asks about Math, "
+                    "Physics, or Chemistry, explain it like a cool big brother. "
+                    "Chat, joke, and be a great companion. Always use emojis! 🌟"
+                )
+
+                if uploaded_file:
+                    img = Image.open(uploaded_file)
+                    response = model.generate_content([system_prompt, img, prompt])
+                else:
+                    response = model.generate_content(f"{system_prompt}\n\nUser says: {prompt}")
+                
+                full_response = response.text
+                st.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except Exception as e:
+                st.error(f"ইস বন্ধু, একটা ঝামেলা হইছে: {e}")
