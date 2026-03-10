@@ -1,41 +1,57 @@
 import streamlit as st
-from groq import Groq
+import google.generativeai as genai
+from PIL import Image
 
-# আপনার Groq API Key
-client = Groq(api_key="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")
+# আপনার Gemini API Key
+API_KEY = "AIzaSyA22909TPzqXNhoogPTNHMeCDAajn2xij4"
+genai.configure(api_key=API_KEY)
 
-st.set_page_config(page_title="Ehesan's AI", page_icon="🚀")
-st.title("🚀 Ehesan's Pro AI Assistant")
+# পেজ কনফিগারেশন
+st.set_page_config(page_title="Ehesan's Pro AI Master", page_icon="🧠")
+st.title("🧠 Ehesan's Visionary AI")
+st.write("আমি এখন ছবি দেখে আপনার অংক, পদার্থবিজ্ঞান ও রসায়নের সমাধান দিতে পারি!")
 
-# বক্স খালি করার ফাংশন
-def clear_text():
-    st.session_state["user_question"] = st.session_state["input"]
-    st.session_state["input"] = ""
+# চ্যাট হিস্ট্রি বক্স খালি করার ট্রিক
+if "input_text" not in st.session_state:
+    st.session_state.input_text = ""
 
-# ইনপুট বক্স (এটার সাথে clear_text কানেক্ট করা হয়েছে)
-st.text_input("আপনার প্রশ্নটি লিখুন:", key="input", on_change=clear_text)
+def submit():
+    st.session_state.input_text = st.session_state.widget
+    st.session_state.widget = ""
 
-# প্রশ্ন প্রসেস করা
-if "user_question" in st.session_state and st.session_state["user_question"]:
-    question = st.session_state["user_question"]
+# ছবি আপলোড করার অপশন (অংক বা নোটের ছবি দেওয়ার জন্য)
+uploaded_file = st.file_uploader("অংক বা সমস্যার ছবি আপলোড করুন", type=["jpg", "jpeg", "png"])
+
+# টেক্সট ইনপুট
+user_query = st.text_input("আপনার প্রশ্ন লিখুন:", key="widget", on_change=submit)
+final_query = st.session_state.input_text
+
+if st.button("Send 📤") or final_query:
+    query_to_use = final_query if final_query else "এই ছবিতে কী আছে বুঝিয়ে বলো।"
     
-    with st.spinner('AI উত্তর তৈরি করছে...'):
+    with st.spinner('বিশ্লেষণ করছি...'):
         try:
-            # এখানে আমরা AI-কে বলে দিচ্ছি সে যেন বাংলা উত্তর দেয়
-            completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant. Always try to understand and reply in Bengali if the user speaks in Bengali or Romanized Bengali (Banglish)."},
-                    {"role": "user", "content": question}
-                ]
-            )
-            st.write(f"**প্রশ্ন:** {question}")
-            st.write("---")
-            st.markdown(completion.choices[0].message.content)
+            # এখানে 'gemini-1.5-flash' ব্যবহার করছি যা ছবি ও বাংলা দুটোই সেরা বোঝে
+            model = genai.GenerativeModel('gemini-1.5-flash')
             
-            # কাজ শেষ হলে প্রশ্ন মুছে ফেলা
-            st.session_state["user_question"] = ""
+            if uploaded_file:
+                img = Image.open(uploaded_file)
+                # ছবি এবং টেক্সট একসাথে প্রসেস করা
+                response = model.generate_content([
+                    "You are an expert teacher. Explain the problem in the image clearly in Bengali. Solve any math, physics, or chemistry problem step by step.", 
+                    img, 
+                    query_to_use
+                ])
+            else:
+                # শুধু টেক্সট হলে
+                response = model.generate_content(f"সবসময় বাংলায় উত্তর দাও। প্রশ্ন: {query_to_use}")
+            
+            st.write("---")
+            st.markdown(response.text)
+            st.session_state.input_text = "" # উত্তর দেখানোর পর প্রশ্ন মুছে ফেলা
+            
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"দুঃখিত ভাই, একটি সমস্যা হয়েছে: {e}")
 
-st.button("Send 📤")
+if uploaded_file:
+    st.image(uploaded_file, caption="আপনার আপলোড করা ছবি", use_container_width=True)
