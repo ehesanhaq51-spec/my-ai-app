@@ -6,7 +6,7 @@ from PIL import Image
 # API KEY
 # =========================
 
-API_KEY = "YOUR_GEMINI_API_KEY"
+API_KEY = "AIzaSyD66p5vPPvXJo5pkoCNJIkaVqYYP7DLjSs"
 
 genai.configure(api_key=API_KEY)
 
