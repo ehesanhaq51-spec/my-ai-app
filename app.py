@@ -2,16 +2,16 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# ১. আপনার নতুন API Key (নিশ্চিত করুন এটি Active আছে)
+# ১. আপনার নতুন API Key
 API_KEY = "AIzaSyD66p5vPPvXJo5pkoCNJIkaVqYYP7DLjSs"
 
-# ২. কনফিগারেশন - সরাসরি ভার্সন সমস্যা এড়াতে সেটআপ
+# ২. সরাসরি কনফিগারেশন - ভার্সন সমস্যা এড়াতে
 try:
     genai.configure(api_key=API_KEY)
     # সঠিক মডেল সরাসরি ডিফাইন করা হয়েছে
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
-    st.error(f"Config error: {e}")
+    st.error(f"কনফিগারেশনে সমস্যা হয়েছে: {e}")
 
 # ৩. ইন্টারফেস ডিজাইন (মোবাইল ফ্রেন্ডলি)
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝", layout="centered")
@@ -26,7 +26,7 @@ st.markdown("""
 st.title("🤝 এহসানের দোস্ত AI")
 st.write("বলো বন্ধু, এখন আমি একদম তৈরি! সব ঝেড়ে কাশতে পারো। 😊")
 
-# ৪. আড্ডা মনে রাখার ব্যবস্থা
+# ৪. আড্ডা মনে রাখার সেশন স্টেট
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -34,10 +34,10 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ৫. সাইডবারে ফাইল আপলোড
+# ৫. সাইডবারে ফাইল আপলোড (অংক বা বিজ্ঞানের ছবির জন্য)
 with st.sidebar:
     st.header("ছবি বা ফাইল")
-    uploaded_file = st.file_uploader("অংক বা বিজ্ঞান সমস্যার ছবি দাও", type=["jpg", "png", "jpeg"])
+    uploaded_file = st.file_uploader("সমস্যার ছবি দাও", type=["jpg", "png", "jpeg"])
 
 # ৬. চ্যাট ইনপুট ও উত্তর জেনারেট করা
 if prompt := st.chat_input("এখানে কিছু লেখো..."):
@@ -51,7 +51,7 @@ if prompt := st.chat_input("এখানে কিছু লেখো..."):
                 # ফ্রেন্ডলি ইনস্ট্রাকশন
                 system_instruction = (
                     "You are the best friend of Ehesan. Speak in very casual and joyful Bengali. "
-                    "Use lots of emojis! 😊🌟 Solve math/science problems like a cool big brother. "
+                    "Use lots of emojis like 😊, 🌟, 🔥! Solve math/science problems like a cool big brother. "
                     "Always reply in Bengali."
                 )
                 
@@ -65,6 +65,6 @@ if prompt := st.chat_input("এখানে কিছু লেখো..."):
                 st.markdown(ai_reply)
                 st.session_state.messages.append({"role": "assistant", "content": ai_reply})
             except Exception as e:
-                # এরর মেসেজ সহজ বাংলায় দেখানো
-                st.error("ইস বন্ধু, ছোট একটা এরর হইছে। গুগল এআই স্টুডিওতে আপনার কোটা শেষ কি না একবার চেক করুন।")
-                st.info(f"প্রযুক্তিগত এরর: {e}")
+                # এরর মেসেজ সহজ বাংলায়
+                st.error("ইস বন্ধু, ছোট একটা কারিগরি সমস্যা হয়েছে। গুগল এআই স্টুডিওতে আপনার লিমিট শেষ কি না দেখুন।")
+                st.info(f"টেকনিক্যাল ডিটেইলস: {e}")
