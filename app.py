@@ -6,7 +6,7 @@ GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🤝")
-st.title("Ehesan AI")
+st.title("Ehesan AI Assistant ")
 
 # ২. চ্যাট হিস্ট্রি বা স্মৃতিশক্তি সেটআপ
 if "messages" not in st.session_state:
