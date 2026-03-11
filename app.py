@@ -43,3 +43,14 @@ if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
             
         except Exception as e:
             st.error(f"ইস বন্ধু! কারিগরি সমস্যা: {str(e)}")
+            # সাইডবারে একটি বাটন যোগ করা (এটি app.py এর একদম শেষে দিতে পারেন)
+with st.sidebar:
+    st.title("কনফিগারেশন")
+    if st.button("চ্যাট ক্লিয়ার করো"):
+        st.session_state.messages = [
+            {"role": "system", "content": "You are Ehesan's best friend. Always speak in friendly Bengali."}
+        ]
+        st.rerun()
+    
+    st.write("---")
+    st.write("ডেভেলপার: এহসান")
