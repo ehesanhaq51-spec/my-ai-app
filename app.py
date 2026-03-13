@@ -6,82 +6,57 @@ import os
 
 # ১. এপিআই কি সেটআপ
 GROQ_API_KEY = "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"
-REPLICATE_TOKEN = "r8_QjBeAx7TGpUAG9FMBbAdUMftp7qpZBq1ZEv1I"
-
 client = Groq(api_key=GROQ_API_KEY)
-os.environ["REPLICATE_API_TOKEN"] = REPLICATE_TOKEN
 
-st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="Ehesan's AI Assistant", page_icon="🎬", layout="wide")
 
-# ২. স্মৃতিশক্তি সেটআপ
+# ২. সেশন স্টেট
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": "You are Ehesan's best friend. Always speak in friendly Bengali."}
-    ]
+    st.session_state.messages = [{"role": "system", "content": "You are a helpful assistant."}]
 
-# ৩. সাইডবার
+# ৩. সাইডবার মেনু
 with st.sidebar:
-    st.title("⚙️ মেনু")
-    app_mode = st.selectbox("কি করতে চান?", ["এহসানের বন্ধু (Chat)", "ভিডিও ও অডিও মেকার"])
-    if st.button("চ্যাট ক্লিয়ার করো"):
-        st.session_state.messages = [{"role": "system", "content": "You are Ehesan's best friend. Always speak in friendly Bengali."}]
-        st.rerun()
+    st.title("⚙️ অপশন")
+    mode = st.selectbox("মোড বেছে নিন:", ["চ্যাট", "ভিডিও/অডিও স্টুডিও"])
     st.write("---")
     st.write("ডেভেলপার: এহসান")
 
-# ৪. চ্যাট মোড
-if app_mode == "এহসানের বন্ধু (Chat)":
-    st.title("🤝 Ehesan AI Assistant")
-    for msg in st.session_state.messages:
-        if msg["role"] != "system":
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
-
-    if prompt := st.chat_input("কিছু লিখো বন্ধু..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        with st.chat_message("assistant"):
-            try:
-                response = client.chat.completions.create(messages=st.session_state.messages, model="llama-3.3-70b-versatile")
-                answer = response.choices[0].message.content
-                st.markdown(answer)
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-            except Exception as e:
-                st.error(f"ইস বন্ধু! সমস্যা হয়েছে: {str(e)}")
-
-# ৫. ভিডিও ও অডিও মোড
-else:
-    st.title("🎬 ভিডিও ও অডিও স্টুডিও")
-    video_script = st.text_area("অডিওর জন্য বাংলা স্ক্রিপ্ট লিখুন...", height=150)
+# ৪. চ্যাটবট
+if mode == "চ্যাট":
+    st.title("🤝 এহসানের বন্ধু")
+    for m in st.session_state.messages:
+        if m["role"] != "system":
+            with st.chat_message(m["role"]): st.markdown(m["content"])
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("🔊 অডিও জেনারেটর")
-        if st.button("ভয়েস তৈরি করুন"):
-            if video_script:
-                with st.spinner('তৈরি হচ্ছে...'):
-                    tts = gTTS(text=video_script, lang='bn')
-                    tts.save("voice.mp3")
-                    st.audio("voice.mp3")
-            else:
-                st.warning("আগে কিছু লিখুন!")
+    if p := st.chat_input("কিছু বলো..."):
+        st.session_state.messages.append({"role": "user", "content": p})
+        with st.chat_message("user"): st.markdown(p)
+        with st.chat_message("assistant"):
+            r = client.chat.completions.create(messages=st.session_state.messages, model="llama-3.3-70b-versatile")
+            st.markdown(r.choices[0].message.content)
+            st.session_state.messages.append({"role": "assistant", "content": r.choices[0].message.content})
 
-    with col2:
-        st.subheader("🎞️ ভিডিও জেনারেটর")
-        video_prompt = st.text_input("ভিডিওর দৃশ্যটি ইংরেজিতে লিখুন (যেমন: A cat playing)")
-        if st.button("ভিডিও জেনারেট করুন"):
-            if video_prompt:
-                with st.spinner('ভিডিও তৈরি হচ্ছে... একটু সময় লাগবে (১-২ মিনিট)।'):
-                    try:
-                        # এখানে সরাসরি রিট্রিভ করা টোকেন ব্যবহার হচ্ছে
-                        output = replicate.run(
-                            "lucataco/luma-dream-machine:13677273-030b-40b9-9a25-e51c9113e790",
-                            input={"prompt": video_prompt}
-                        )
-                        st.video(output)
-                        st.success("ভিডিও রেডি! মাউসের রাইট ক্লিক করে সেভ করুন।")
-                    except Exception as e:
-                        st.error(f"ভিডিও এরর: {str(e)}")
-            else:
-                st.warning("ভিডিওর জন্য ইংরেজি প্রম্পট দিন!")
+# ৫. ভিডিও ও অডিও
+else:
+    st.title("🎬 এআই স্টুডিও")
+    text = st.text_area("অডিওর জন্য স্ক্রিপ্ট লিখুন:")
+    if st.button("ভয়েস বানান"):
+        if text:
+            gTTS(text=text, lang='bn').save("v.mp3")
+            st.audio("v.mp3")
+    
+    st.write("---")
+    v_prompt = st.text_input("ভিডিওর জন্য ইংরেজি প্রম্পট দিন:")
+    if st.button("ভিডিও জেনারেট করুন"):
+        if v_prompt:
+            with st.spinner("ভিডিও তৈরি হচ্ছে..."):
+                try:
+                    # সরাসরি টোকেন ব্যবহার করা হচ্ছে
+                    output = replicate.run(
+                        "lucataco/luma-dream-machine:13677273-030b-40b9-9a25-e51c9113e790",
+                        input={"prompt": v_prompt},
+                        api_token="r8_QjBeAx7TGpUAG9FMBbAdUMftp7qpZBq1ZEv1I"
+                    )
+                    st.video(output)
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
