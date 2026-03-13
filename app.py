@@ -6,24 +6,26 @@ import os
 
 # ১. এপিআই কি সেটআপ
 GROQ_API_KEY = "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"
+REPLICATE_TOKEN = "r8_EsCZJpWO67kYD5KnljjSRfuWKKWUvc544ls03"
+
 client = Groq(api_key=GROQ_API_KEY)
+os.environ["REPLICATE_API_TOKEN"] = REPLICATE_TOKEN
 
 st.set_page_config(page_title="Ehesan's AI Studio", page_icon="🎬", layout="wide")
 
-# ২. চ্যাট মেমোরি
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": "You are a friendly assistant for Ehesan."}]
-
-# ৩. সাইডবার মেনু
+# ২. সাইডবার মেনু
 with st.sidebar:
-    st.title("⚙️ সেটিংস")
+    st.title("⚙️ মেনু")
     mode = st.selectbox("কি করতে চান?", ["চ্যাটবট", "ভিডিও ও অডিও মেকার"])
     st.write("---")
     st.write("ডেভেলপার: এহসান")
 
-# ৪. চ্যাটবট মোড
+# ৩. চ্যাট মোড
 if mode == "চ্যাটবট":
     st.title("🤝 এহসানের বন্ধু")
+    if "messages" not in st.session_state:
+        st.session_state.messages = [{"role": "system", "content": "You are a friendly assistant."}]
+    
     for m in st.session_state.messages:
         if m["role"] != "system":
             with st.chat_message(m["role"]): st.markdown(m["content"])
@@ -36,12 +38,11 @@ if mode == "চ্যাটবট":
             st.markdown(r.choices[0].message.content)
             st.session_state.messages.append({"role": "assistant", "content": r.choices[0].message.content})
 
-# ৫. ভিডিও ও অডিও মোড
+# ৪. ভিডিও ও অডিও মোড
 else:
-    st.title("🎬 এআই ভিডিও ও অডিও স্টুডিও")
+    st.title("🎬 ভিডিও ও অডিও স্টুডিও")
     
-    # অডিও পার্ট
-    script = st.text_area("অডিওর জন্য বাংলা স্ক্রিপ্ট লিখুন:")
+    script = st.text_area("অডিওর জন্য বাংলা স্ক্রিপ্ট:")
     if st.button("ভয়েস বানান"):
         if script:
             gTTS(text=script, lang='bn').save("v.mp3")
@@ -49,19 +50,17 @@ else:
     
     st.write("---")
     
-    # ভিডিও পার্ট
-    v_prompt = st.text_input("ভিডিওর জন্য ইংরেজি প্রম্পট দিন (যেমন: A cat playing):")
+    v_prompt = st.text_input("ভিডিওর জন্য ইংরেজি বর্ণনা (যেমন: A cat playing):")
     if st.button("ভিডিও জেনারেট করুন"):
         if v_prompt:
-            with st.spinner("আপনার এআই ভিডিও তৈরি হচ্ছে... ১-২ মিনিট ধৈর্য ধরুন।"):
+            with st.spinner("ভিডিও তৈরি হচ্ছে..."):
                 try:
-                    # আপনার নতুন টোকেনটি এখানে সরাসরি বসিয়ে দিলাম
+                    # সরাসরি টোকেন দিয়ে রান করা হচ্ছে
                     output = replicate.run(
                         "lucataco/luma-dream-machine:13677273-030b-40b9-9a25-e51c9113e790",
                         input={"prompt": v_prompt},
-                        api_token="r8_EsCZJpWO67kYD5KnljjSRfuWKKWUvc544ls03"
+                        api_token=REPLICATE_TOKEN
                     )
                     st.video(output)
-                    st.success("অভিনন্দন! ভিডিও তৈরি হয়ে গেছে।")
                 except Exception as e:
                     st.error(f"এরর: {str(e)}")
