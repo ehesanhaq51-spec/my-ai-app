@@ -4,7 +4,7 @@ from gtts import gTTS
 import replicate
 import os
 
-# ১. এপিআই কি সেটআপ (আমি আপনার টোকেনগুলো এখানে বসিয়ে দিয়েছি)
+# ১. এপিআই কি সেটআপ
 GROQ_API_KEY = "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"
 REPLICATE_TOKEN = "r8_QjBeAx7TGpUAG9FMBbAdUMftp7qpZBq1ZEv1I"
 
@@ -57,7 +57,7 @@ else:
     
     col1, col2 = st.columns(2)
     with col1:
-        st.subheader("🔊 অডিও")
+        st.subheader("🔊 অডিও জেনারেটর")
         if st.button("ভয়েস তৈরি করুন"):
             if video_script:
                 with st.spinner('তৈরি হচ্ছে...'):
@@ -68,18 +68,20 @@ else:
                 st.warning("আগে কিছু লিখুন!")
 
     with col2:
-        st.subheader("🎞️ ভিডিও")
+        st.subheader("🎞️ ভিডিও জেনারেটর")
         video_prompt = st.text_input("ভিডিওর দৃশ্যটি ইংরেজিতে লিখুন (যেমন: A cat playing)")
         if st.button("ভিডিও জেনারেট করুন"):
             if video_prompt:
-                with st.spinner('ভিডিও তৈরি হচ্ছে... একটু সময় লাগবে।'):
+                with st.spinner('ভিডিও তৈরি হচ্ছে... একটু সময় লাগবে (১-২ মিনিট)।'):
                     try:
+                        # এখানে সরাসরি রিট্রিভ করা টোকেন ব্যবহার হচ্ছে
                         output = replicate.run(
                             "lucataco/luma-dream-machine:13677273-030b-40b9-9a25-e51c9113e790",
                             input={"prompt": video_prompt}
                         )
                         st.video(output)
+                        st.success("ভিডিও রেডি! মাউসের রাইট ক্লিক করে সেভ করুন।")
                     except Exception as e:
-                        st.error(f"ভিডিও এরর: {e}")
+                        st.error(f"ভিডিও এরর: {str(e)}")
             else:
                 st.warning("ভিডিওর জন্য ইংরেজি প্রম্পট দিন!")
