@@ -8,9 +8,8 @@ import os
 GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
-# Replicate API Key (ভিডিওর জন্য - এখানে আপনারটা বসিয়ে দিন)
-# os.environ["# Replicate API Key (ভিডিওর জন্য)
-os.environ["REPLICATE_API_TOKEN"] = "r8_************************************"] = "আপনার_replicate_token_এখানে"
+# Replicate API Key (আপনার দেওয়া টোকেনটি এখানে বসিয়ে দিলাম)
+os.environ["REPLICATE_API_TOKEN"] = "r8_QjBeAx7TGpUAG9FMBbAdUMftp7qpZBq1ZEv1I"
 
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🎬", layout="wide")
 
@@ -34,7 +33,7 @@ with st.sidebar:
     st.write("---")
     st.write("ডেভেলপার: এহসান")
 
-# ৪. চ্যাটবট মোড (আপনার আগের কাজ)
+# ৪. চ্যাটবট মোড
 if app_mode == "এহসানের বন্ধু (Chat)":
     st.title("🤝 Ehesan AI Assistant")
     for msg in st.session_state.messages:
@@ -59,40 +58,45 @@ if app_mode == "এহসানের বন্ধু (Chat)":
             except Exception as e:
                 st.error(f"ইস বন্ধু! কারিগরি সমস্যা: {str(e)}")
 
-# ৫. ভিডিও ও অডিও মোড (নতুন সংযোজন)
+# ৫. ভিডিও ও অডিও মোড
 else:
     st.title("🎬 ভিডিও ও অডিও স্টুডিও")
     
-    video_script = st.text_area("আপনার ভিডিওর স্ক্রিপ্ট এখানে দিন...", height=200)
+    video_script = st.text_area("আপনার ভিডিওর স্ক্রিপ্ট এখানে দিন (ভয়েস ওভারের জন্য)...", height=150)
     
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🔊 অডিও তৈরি ও ডাউনলোড"):
+        st.subheader("🔊 অডিও জেনারেটর")
+        if st.button("অডিও তৈরি করুন"):
             if video_script:
                 with st.spinner('ভয়েস তৈরি হচ্ছে...'):
-                    tts = gTTS(text=video_script, lang='bn')
-                    tts.save("voice.mp3")
-                    st.audio("voice.mp3")
-                    with open("voice.mp3", "rb") as f:
-                        st.download_button("Download Audio", f, file_name="ehesan_voice.mp3")
+                    try:
+                        tts = gTTS(text=video_script, lang='bn')
+                        tts.save("voice.mp3")
+                        st.audio("voice.mp3")
+                        with open("voice.mp3", "rb") as f:
+                            st.download_button("ডাউনলোড অডিও", f, file_name="ehesan_voice.mp3")
+                    except Exception as e:
+                        st.error(f"অডিও তৈরিতে সমস্যা: {e}")
             else:
-                st.error("আগে স্ক্রিপ্ট লিখুন!")
+                st.warning("আগে উপরের বক্সে কিছু লিখুন!")
 
     with col2:
-        video_prompt = st.text_input("ভিডিওর দৃশ্যটি ইংরেজিতে লিখুন (যেমন: A cat playing)")
-        if st.button("🎞️ জেনারেট এইচডি ভিডিও"):
-            # আপনার Replicate টোকেন থাকলে এটি কাজ করবে
-            if "REPLICATE_API_TOKEN" not in os.environ:
-                st.warning("ভাই, সাইডবার বা কোডে আপনার Replicate API Token সেট করা নেই।")
-            elif video_prompt:
-                with st.spinner('১০ সেকেন্ডের হাই-কোয়ালিটি ভিডিও তৈরি হচ্ছে...'):
+        st.subheader("🎞️ ভিডিও জেনারেটর")
+        video_prompt = st.text_input("ভিডিওর দৃশ্যটি ইংরেজিতে লিখুন...", placeholder="Ex: A tiger in a forest, cinematic 4k")
+        if st.button("এইচডি ভিডিও তৈরি করুন"):
+            if video_prompt:
+                with st.spinner('১০ সেকেন্ডের হাই-কোয়ালিটি ভিডিও তৈরি হচ্ছে (১-২ মিনিট সময় লাগতে পারে)...'):
                     try:
+                        # Luma Dream Machine মডেল ব্যবহার করা হচ্ছে
                         output = replicate.run(
                             "lucataco/luma-dream-machine:13677273-030b-40b9-9a25-e51c9113e790",
                             input={"prompt": video_prompt}
                         )
                         st.video(output)
-                        st.success("ভিডিও রেডি! মাউসের রাইট ক্লিক করে সেভ করুন।")
+                        st.success("ভিডিও তৈরি হয়েছে! মাউসের রাইট ক্লিক করে সেভ করুন।")
                     except Exception as e:
                         st.error(f"ভিডিও তৈরিতে সমস্যা: {e}")
+            else:
+                st.warning("ভিডিওর জন্য একটি
