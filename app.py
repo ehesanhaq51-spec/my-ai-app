@@ -10,19 +10,19 @@ client = Groq(api_key=GROQ_API_KEY)
 
 st.set_page_config(page_title="Ehesan's AI Studio", page_icon="🎬", layout="wide")
 
-# ২. সেশন স্টেট (চ্যাট মনে রাখার জন্য)
+# ২. চ্যাট মেমোরি
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": "You are a friendly assistant for Ehesan."}]
 
 # ৩. সাইডবার মেনু
 with st.sidebar:
-    st.title("⚙️ মেনু")
-    mode = st.selectbox("মোড বেছে নিন:", ["চ্যাট", "ভিডিও ও অডিও স্টুডিও"])
+    st.title("⚙️ সেটিংস")
+    mode = st.selectbox("কি করতে চান?", ["চ্যাটবট", "ভিডিও ও অডিও মেকার"])
     st.write("---")
     st.write("ডেভেলপার: এহসান")
 
-# ৪. চ্যাটবট অংশ
-if mode == "চ্যাট":
+# ৪. চ্যাটবট মোড
+if mode == "চ্যাটবট":
     st.title("🤝 এহসানের বন্ধু")
     for m in st.session_state.messages:
         if m["role"] != "system":
@@ -36,36 +36,32 @@ if mode == "চ্যাট":
             st.markdown(r.choices[0].message.content)
             st.session_state.messages.append({"role": "assistant", "content": r.choices[0].message.content})
 
-# ৫. ভিডিও ও অডিও স্টুডিও অংশ
+# ৫. ভিডিও ও অডিও মোড
 else:
-    st.title("🎬 এআই ভিডিও ও অডিও মেকার")
+    st.title("🎬 এআই ভিডিও ও অডিও স্টুডিও")
     
-    st.subheader("🔊 ১. বাংলা ভয়েস তৈরি")
-    text = st.text_area("অডিওর জন্য বাংলা স্ক্রিপ্ট লিখুন (যেমন: আসসালামু আলাইকুম বন্ধুরা...):")
-    if st.button("ভয়েস জেনারেট করুন"):
-        if text:
-            with st.spinner("ভয়েস তৈরি হচ্ছে..."):
-                gTTS(text=text, lang='bn').save("v.mp3")
-                st.audio("v.mp3")
-                st.success("ভয়েস রেডি! নিচের ডাউনলোড বাটনে ক্লিক করুন।")
+    # অডিও পার্ট
+    script = st.text_area("অডিওর জন্য বাংলা স্ক্রিপ্ট লিখুন:")
+    if st.button("ভয়েস বানান"):
+        if script:
+            gTTS(text=script, lang='bn').save("v.mp3")
+            st.audio("v.mp3")
     
     st.write("---")
     
-    st.subheader("🎞️ ২. এআই ভিডিও তৈরি")
-    v_prompt = st.text_input("ভিডিওর দৃশ্যটি ইংরেজিতে লিখুন:", placeholder="Ex: A cat playing in a garden, cinematic 4k")
-    if st.button("এইচডি ভিডিও তৈরি করুন"):
+    # ভিডিও পার্ট
+    v_prompt = st.text_input("ভিডিওর জন্য ইংরেজি প্রম্পট দিন (যেমন: A cat playing):")
+    if st.button("ভিডিও জেনারেট করুন"):
         if v_prompt:
-            with st.spinner("ভিডিও তৈরি হতে ১-২ মিনিট সময় নিতে পারে। একটু ধৈর্য ধরুন..."):
+            with st.spinner("আপনার এআই ভিডিও তৈরি হচ্ছে... ১-২ মিনিট ধৈর্য ধরুন।"):
                 try:
-                    # আপনার নতুন টোকেনটি এখানে সরাসরি দেওয়া হয়েছে
+                    # আপনার নতুন টোকেনটি এখানে সরাসরি বসিয়ে দিলাম
                     output = replicate.run(
                         "lucataco/luma-dream-machine:13677273-030b-40b9-9a25-e51c9113e790",
                         input={"prompt": v_prompt},
                         api_token="r8_EsCZJpWO67kYD5KnljjSRfuWKKWUvc544ls03"
                     )
                     st.video(output)
-                    st.success("অভিনন্দন! আপনার ভিডিও তৈরি হয়ে গেছে।")
+                    st.success("অভিনন্দন! ভিডিও তৈরি হয়ে গেছে।")
                 except Exception as e:
-                    st.error(f"দুঃখিত বন্ধু, একটি সমস্যা হয়েছে: {str(e)}")
-        else:
-            st.warning("ভিডিওর জন্য আগে একটি ইংরেজি বর্ণনা (Prompt) লিখুন।")
+                    st.error(f"এরর: {str(e)}")
