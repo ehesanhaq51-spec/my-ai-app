@@ -9,7 +9,8 @@ GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
 # Replicate API Key (ভিডিওর জন্য - এখানে আপনারটা বসিয়ে দিন)
-# os.environ["REPLICATE_API_TOKEN"] = "আপনার_replicate_token_এখানে"
+# os.environ["# Replicate API Key (ভিডিওর জন্য)
+os.environ["REPLICATE_API_TOKEN"] = "r8_************************************"] = "আপনার_replicate_token_এখানে"
 
 st.set_page_config(page_title="Ehesan's Buddy AI", page_icon="🎬", layout="wide")
 
